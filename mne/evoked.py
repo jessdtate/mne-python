@@ -427,7 +427,7 @@ class Evoked(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
         self._update_first_last()
         return self
 
-    @copy_function_doc_to_method_doc(plot_evoked)
+    #@copy_function_doc_to_method_doc(plot_evoked)
     def plot(self, picks=None, exclude='bads', unit=True, show=True, ylim=None,
              xlim='tight', proj=False, hline=None, units=None, scalings=None,
              titles=None, axes=None, gfp=False, window_title=None,
@@ -441,7 +441,7 @@ class Evoked(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
             zorder=zorder, selectable=selectable, noise_cov=noise_cov,
             time_unit=time_unit, sphere=sphere, verbose=verbose)
 
-    @copy_function_doc_to_method_doc(plot_evoked_image)
+    #@copy_function_doc_to_method_doc(plot_evoked_image)
     def plot_image(self, picks=None, exclude='bads', unit=True, show=True,
                    clim=None, xlim='tight', proj=False, units=None,
                    scalings=None, titles=None, axes=None, cmap='RdBu_r',
@@ -456,7 +456,7 @@ class Evoked(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
             time_unit=time_unit, show_names=show_names, group_by=group_by,
             sphere=sphere)
 
-    @copy_function_doc_to_method_doc(plot_evoked_topo)
+    #@copy_function_doc_to_method_doc(plot_evoked_topo)
     def plot_topo(self, layout=None, layout_scale=0.945, color=None,
                   border='none', ylim=None, scalings=None, title=None,
                   proj=False, vline=[0.0], fig_background=None,
@@ -476,7 +476,7 @@ class Evoked(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
             background_color=background_color, noise_cov=noise_cov,
             exclude=exclude, show=show)
 
-    @copy_function_doc_to_method_doc(plot_evoked_topomap)
+    #@copy_function_doc_to_method_doc(plot_evoked_topomap)
     def plot_topomap(self, times="auto", ch_type=None, vmin=None,
                      vmax=None, cmap=None, sensors=True, colorbar=True,
                      scalings=None, units=None, res=64,
@@ -499,7 +499,7 @@ class Evoked(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
             axes=axes, extrapolate=extrapolate, sphere=sphere, border=border,
             nrows=nrows, ncols=ncols)
 
-    @copy_function_doc_to_method_doc(plot_evoked_field)
+    #@copy_function_doc_to_method_doc(plot_evoked_field)
     def plot_field(self, surf_maps, time=None, time_label='t = %0.0f ms',
                    n_jobs=1, fig=None, vmax=None, n_contours=21, verbose=None):
         return plot_evoked_field(self, surf_maps, time=time,
@@ -507,14 +507,14 @@ class Evoked(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
                                  fig=fig, vmax=vmax, n_contours=n_contours,
                                  verbose=verbose)
 
-    @copy_function_doc_to_method_doc(plot_evoked_white)
+    #@copy_function_doc_to_method_doc(plot_evoked_white)
     def plot_white(self, noise_cov, show=True, rank=None, time_unit='s',
                    sphere=None, axes=None, verbose=None):
         return plot_evoked_white(
             self, noise_cov=noise_cov, rank=rank, show=show,
             time_unit=time_unit, sphere=sphere, axes=axes, verbose=verbose)
 
-    @copy_function_doc_to_method_doc(plot_evoked_joint)
+    #@copy_function_doc_to_method_doc(plot_evoked_joint)
     def plot_joint(self, times="peaks", title='', picks=None,
                    exclude='bads', show=True, ts_args=None,
                    topomap_args=None):

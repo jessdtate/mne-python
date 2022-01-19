@@ -636,7 +636,7 @@ class _BaseSourceEstimate(TimeMixin):
                    title='mnepython',
                    overwrite=True)
 
-    @copy_function_doc_to_method_doc(plot_source_estimates)
+    #@copy_function_doc_to_method_doc(plot_source_estimates)
     def plot(self, subject=None, surface='inflated', hemi='lh',
              colormap='auto', time_label='auto', smoothing_steps=10,
              transparent=True, alpha=1.0, time_viewer='auto',
@@ -1905,7 +1905,7 @@ class _BaseVectorSourceEstimate(_BaseSourceEstimate):
             self.verbose)
         return stc, directions
 
-    @copy_function_doc_to_method_doc(plot_vector_source_estimates)
+    #@copy_function_doc_to_method_doc(plot_vector_source_estimates)
     def plot(self, subject=None, hemi='lh', colormap='hot', time_label='auto',
              smoothing_steps=10, transparent=True, brain_alpha=0.4,
              overlay_alpha=None, vector_alpha=1.0, scale_factor=None,
@@ -1936,7 +1936,7 @@ class _BaseVolSourceEstimate(_BaseSourceEstimate):
     _src_type = 'volume'
     _src_count = None
 
-    @copy_function_doc_to_method_doc(plot_source_estimates)
+    #@copy_function_doc_to_method_doc(plot_source_estimates)
     def plot_3d(self, subject=None, surface='white', hemi='both',
                 colormap='auto', time_label='auto', smoothing_steps=10,
                 transparent=True, alpha=0.1, time_viewer='auto',
@@ -1960,7 +1960,7 @@ class _BaseVolSourceEstimate(_BaseSourceEstimate):
             view_layout=view_layout, add_data_kwargs=add_data_kwargs,
             brain_kwargs=brain_kwargs, verbose=verbose)
 
-    @copy_function_doc_to_method_doc(plot_volume_source_estimates)
+    #@copy_function_doc_to_method_doc(plot_volume_source_estimates)
     def plot(self, src, subject=None, subjects_dir=None, mode='stat_map',
              bg_img='T1.mgz', colorbar=True, colormap='auto', clim='auto',
              transparent='auto', show=True, initial_time=None,
@@ -2278,7 +2278,7 @@ class VolVectorSourceEstimate(_BaseVolSourceEstimate,
     _scalar_class = VolSourceEstimate
 
     # defaults differ: hemi='both', views='axial'
-    @copy_function_doc_to_method_doc(plot_vector_source_estimates)
+    #@copy_function_doc_to_method_doc(plot_vector_source_estimates)
     def plot_3d(self, subject=None, hemi='both', colormap='hot',
                 time_label='auto',
                 smoothing_steps=10, transparent=True, brain_alpha=0.4,

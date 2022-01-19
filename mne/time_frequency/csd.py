@@ -393,7 +393,7 @@ class CrossSpectralDensity(object):
         else:
             return data
 
-    @copy_function_doc_to_method_doc(plot_csd)
+    #@copy_function_doc_to_method_doc(plot_csd)
     def plot(self, info=None, mode='csd', colorbar=True, cmap='viridis',
              n_cols=None, show=True):
         return plot_csd(self, info=info, mode=mode, colorbar=colorbar,

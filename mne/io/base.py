@@ -1028,7 +1028,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
         return self
 
     # Need a separate method because the default pad is different for raw
-    @copy_doc(FilterMixin.filter)
+    #@copy_doc(FilterMixin.filter)
     def filter(self, l_freq, h_freq, picks=None, filter_length='auto',
                l_trans_bandwidth='auto', h_trans_bandwidth='auto', n_jobs=1,
                method='fir', iir_params=None, phase='zero',
@@ -1530,7 +1530,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
                              % (tmin, tmax))
         return start, stop
 
-    @copy_function_doc_to_method_doc(plot_raw)
+    #@copy_function_doc_to_method_doc(plot_raw)
     def plot(self, events=None, duration=10.0, start=0.0, n_channels=20,
              bgcolor='w', color=None, bad_color='lightgray',
              event_color='cyan', scalings=None, remove_dc=True, order=None,
@@ -1551,7 +1551,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
                         verbose=verbose)
 
     @verbose
-    @copy_function_doc_to_method_doc(plot_raw_psd)
+    #@copy_function_doc_to_method_doc(plot_raw_psd)
     def plot_psd(self, fmin=0, fmax=np.inf, tmin=None, tmax=None, proj=False,
                  n_fft=None, n_overlap=0, reject_by_annotation=True,
                  picks=None, ax=None, color='black', xscale='linear',
@@ -1569,7 +1569,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
                             spatial_colors=spatial_colors, sphere=sphere,
                             window=window, exclude=exclude, verbose=verbose)
 
-    @copy_function_doc_to_method_doc(plot_raw_psd_topo)
+    #@copy_function_doc_to_method_doc(plot_raw_psd_topo)
     def plot_psd_topo(self, tmin=0., tmax=None, fmin=0, fmax=100, proj=False,
                       n_fft=2048, n_overlap=0, layout=None, color='w',
                       fig_facecolor='k', axis_facecolor='k', dB=True,

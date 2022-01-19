@@ -1915,7 +1915,7 @@ class ICA(ContainsMixin):
         """
         return deepcopy(self)
 
-    @copy_function_doc_to_method_doc(plot_ica_components)
+    #@copy_function_doc_to_method_doc(plot_ica_components)
     def plot_components(self, picks=None, ch_type=None, res=64,
                         vmin=None, vmax=None, cmap='RdBu_r', sensors=True,
                         colorbar=False, title=None, show=True, outlines='head',
@@ -1935,7 +1935,7 @@ class ICA(ContainsMixin):
                                    reject=reject, sphere=sphere,
                                    verbose=verbose)
 
-    @copy_function_doc_to_method_doc(plot_ica_properties)
+    #@copy_function_doc_to_method_doc(plot_ica_properties)
     def plot_properties(self, inst, picks=None, axes=None, dB=True,
                         plot_std=True, topomap_args=None, image_args=None,
                         psd_args=None, figsize=None, show=True, reject='auto',
@@ -1948,7 +1948,7 @@ class ICA(ContainsMixin):
                                    reject_by_annotation=reject_by_annotation,
                                    verbose=verbose)
 
-    @copy_function_doc_to_method_doc(plot_ica_sources)
+    #@copy_function_doc_to_method_doc(plot_ica_sources)
     def plot_sources(self, inst, picks=None, start=None,
                      stop=None, title=None, show=True, block=False,
                      show_first_samp=False, show_scrollbars=True,
@@ -1959,7 +1959,7 @@ class ICA(ContainsMixin):
                                 show_scrollbars=show_scrollbars,
                                 time_format=time_format)
 
-    @copy_function_doc_to_method_doc(plot_ica_scores)
+    #@copy_function_doc_to_method_doc(plot_ica_scores)
     def plot_scores(self, scores, exclude=None, labels=None, axhline=None,
                     title='ICA component scores', figsize=None, n_cols=None,
                     show=True):
@@ -1968,7 +1968,7 @@ class ICA(ContainsMixin):
             axhline=axhline, title=title, figsize=figsize, n_cols=n_cols,
             show=show)
 
-    @copy_function_doc_to_method_doc(plot_ica_overlay)
+    #@copy_function_doc_to_method_doc(plot_ica_overlay)
     def plot_overlay(self, inst, exclude=None, picks=None, start=None,
                      stop=None, title=None, show=True, n_pca_components=None):
         return plot_ica_overlay(self, inst=inst, exclude=exclude, picks=picks,

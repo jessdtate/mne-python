@@ -190,7 +190,7 @@ class DigMontage(object):
         return ('<DigMontage | {extra:d} extras (headshape), {hpi:d} HPIs,'
                 ' {fid:d} fiducials, {eeg:d} channels>').format(**n_points)
 
-    @copy_function_doc_to_method_doc(plot_montage)
+    #@copy_function_doc_to_method_doc(plot_montage)
     def plot(self, scale_factor=20, show_names=True, kind='topomap', show=True,
              sphere=None, verbose=None):
         return plot_montage(self, scale_factor=scale_factor,

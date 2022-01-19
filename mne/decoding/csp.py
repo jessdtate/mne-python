@@ -18,7 +18,7 @@ from ..fixes import pinv
 from ..utils import fill_doc, _check_option, _validate_type, copy_doc
 
 
-@fill_doc
+#@fill_doc
 class CSP(TransformerMixin, BaseEstimator):
     """M/EEG signal decomposition using the Common Spatial Patterns (CSP).
 
@@ -231,7 +231,7 @@ class CSP(TransformerMixin, BaseEstimator):
                 X /= self.std_
         return X
 
-    @copy_doc(TransformerMixin.fit_transform)
+    #@copy_doc(TransformerMixin.fit_transform)
     def fit_transform(self, X, y, **fit_params):  # noqa: D102
         return super().fit_transform(X, y=y, **fit_params)
 

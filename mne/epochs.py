@@ -1158,7 +1158,7 @@ class BaseEpochs(ProjMixin, ContainsMixin, UpdateChannelsMixin, ShiftTimeMixin,
         """Channel names."""
         return self.info['ch_names']
 
-    @copy_function_doc_to_method_doc(plot_epochs)
+    #@copy_function_doc_to_method_doc(plot_epochs)
     def plot(self, picks=None, scalings=None, n_epochs=20, n_channels=20,
              title=None, events=None, event_color=None,
              order=None, show=True, block=False, decim='auto', noise_cov=None,
@@ -1174,7 +1174,7 @@ class BaseEpochs(ProjMixin, ContainsMixin, UpdateChannelsMixin, ShiftTimeMixin,
                            epoch_colors=epoch_colors, event_id=event_id,
                            group_by=group_by)
 
-    @copy_function_doc_to_method_doc(plot_epochs_psd)
+    #@copy_function_doc_to_method_doc(plot_epochs_psd)
     def plot_psd(self, fmin=0, fmax=np.inf, tmin=None, tmax=None,
                  proj=False, bandwidth=None, adaptive=False, low_bias=True,
                  normalization='length', picks=None, ax=None, color='black',
@@ -1193,7 +1193,7 @@ class BaseEpochs(ProjMixin, ContainsMixin, UpdateChannelsMixin, ShiftTimeMixin,
                                spatial_colors=spatial_colors, sphere=sphere,
                                exclude=exclude, verbose=verbose)
 
-    @copy_function_doc_to_method_doc(plot_epochs_psd_topomap)
+    #@copy_function_doc_to_method_doc(plot_epochs_psd_topomap)
     def plot_psd_topomap(self, bands=None, tmin=None,
                          tmax=None, proj=False, bandwidth=None, adaptive=False,
                          low_bias=True, normalization='length', ch_type=None,
@@ -1209,7 +1209,7 @@ class BaseEpochs(ProjMixin, ContainsMixin, UpdateChannelsMixin, ShiftTimeMixin,
             normalize=normalize, cbar_fmt=cbar_fmt, outlines=outlines,
             axes=axes, show=show, sphere=sphere, vlim=vlim, verbose=verbose)
 
-    @copy_function_doc_to_method_doc(plot_topo_image_epochs)
+    #@copy_function_doc_to_method_doc(plot_topo_image_epochs)
     def plot_topo_image(self, layout=None, sigma=0., vmin=None, vmax=None,
                         colorbar=None, order=None, cmap='RdBu_r',
                         layout_scale=.95, title=None, scalings=None,
@@ -1287,7 +1287,7 @@ class BaseEpochs(ProjMixin, ContainsMixin, UpdateChannelsMixin, ShiftTimeMixin,
         """
         return _drop_log_stats(self.drop_log, ignore)
 
-    @copy_function_doc_to_method_doc(plot_drop_log)
+    #@copy_function_doc_to_method_doc(plot_drop_log)
     def plot_drop_log(self, threshold=0, n_max_plot=20, subject=None,
                       color=(0.9, 0.9, 0.9), width=0.8, ignore=('IGNORED',),
                       show=True):
@@ -1299,7 +1299,7 @@ class BaseEpochs(ProjMixin, ContainsMixin, UpdateChannelsMixin, ShiftTimeMixin,
                              color=color, width=width, ignore=ignore,
                              show=show)
 
-    @copy_function_doc_to_method_doc(plot_epochs_image)
+    #@copy_function_doc_to_method_doc(plot_epochs_image)
     def plot_image(self, picks=None, sigma=0., vmin=None, vmax=None,
                    colorbar=True, order=None, show=True, units=None,
                    scalings=None, cmap=None, fig=None, axes=None,
