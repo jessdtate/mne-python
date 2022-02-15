@@ -12,7 +12,6 @@ from functools import partial
 from io import BytesIO
 import os
 import os.path as op
-import sys
 import time
 import copy
 import traceback
@@ -20,7 +19,6 @@ import warnings
 
 import numpy as np
 from collections import OrderedDict
-from decorator import decorator
 
 from .colormap import calculate_lut
 from .surface import _Surface
@@ -29,7 +27,7 @@ from .callback import (ShowView, TimeCallBack, SmartCallBack,
                        UpdateLUT, UpdateColorbarScale)
 
 from ..utils import (_show_help_fig, _get_color_list, concatenate_images,
-                     _generate_default_filename, _save_ndarray_img)
+                     _generate_default_filename, _save_ndarray_img, safe_event)
 from .._3d import (_process_clim, _handle_time, _check_views,
                    _handle_sensor_types, _plot_sensors)
 from ...defaults import _handle_default, DEFAULTS
@@ -44,20 +42,11 @@ from ...source_space import SourceSpaces
 from ...transforms import (apply_trans, invert_transform, _get_trans,
                            _get_transforms_to_coord_frame)
 from ...utils import (_check_option, logger, verbose, fill_doc, _validate_type,
-                      use_log_level, Bunch, _ReuseCycle, warn,
+                      use_log_level, Bunch, _ReuseCycle, warn, deprecated,
                       get_subjects_dir, _check_fname, _to_rgb)
 
 
 _ARROW_MOVE = 10  # degrees per press
-
-
-@decorator
-def safe_event(fun, *args, **kwargs):
-    """Protect against PyQt5 exiting on event-handling errors."""
-    try:
-        return fun(*args, **kwargs)
-    except Exception:
-        traceback.print_exc(file=sys.stderr)
 
 
 class _Overlay(object):
@@ -264,17 +253,17 @@ class Brain(object):
     cortex : str, list, dict
         Specifies how the cortical surface is rendered. Options:
 
-            1. The name of one of the preset cortex styles:
-               ``'classic'`` (default), ``'high_contrast'``,
-               ``'low_contrast'``, or ``'bone'``.
-            2. A single color-like argument to render the cortex as a single
-               color, e.g. ``'red'`` or ``(0.1, 0.4, 1.)``.
-            3. A list of two color-like used to render binarized curvature
-               values for gyral (first) and sulcal (second). regions, e.g.,
-               ``['red', 'blue']`` or ``[(1, 0, 0), (0, 0, 1)]``.
-            4. A dict containing keys ``'vmin', 'vmax', 'colormap'`` with
-               values used to render the binarized curvature (where 0 is gyral,
-               1 is sulcal).
+        1. The name of one of the preset cortex styles:
+            ``'classic'`` (default), ``'high_contrast'``,
+            ``'low_contrast'``, or ``'bone'``.
+        2. A single color-like argument to render the cortex as a single
+            color, e.g. ``'red'`` or ``(0.1, 0.4, 1.)``.
+        3. A list of two color-like used to render binarized curvature
+            values for gyral (first) and sulcal (second). regions, e.g.,
+            ``['red', 'blue']`` or ``[(1, 0, 0), (0, 0, 1)]``.
+        4. A dict containing keys ``'vmin', 'vmax', 'colormap'`` with
+            values used to render the binarized curvature (where 0 is gyral,
+            1 is sulcal).
 
         .. versionchanged:: 0.24
            Add support for non-string arguments.
@@ -296,8 +285,7 @@ class Brain(object):
         If not None, this directory will be used as the subjects directory
         instead of the value set using the SUBJECTS_DIR environment
         variable.
-    views : list | str
-        The views to use.
+    %(views)s
     offset : bool | str
         If True, shifts the right- or left-most x coordinate of the left and
         right surfaces, respectively, to be at zero. This is useful for viewing
@@ -331,6 +319,8 @@ class Brain(object):
         <https://github.com/albertosottile/darkdetect>`__ is required.
     show : bool
         Display the window as soon as it is ready. Defaults to True.
+    block : bool
+        If True, start the Qt application event loop. Default to False.
 
     Attributes
     ----------
@@ -347,79 +337,73 @@ class Brain(object):
     .. table::
        :widths: auto
 
-       +---------------------------+--------------+---------------+
-       | 3D function:              | surfer.Brain | mne.viz.Brain |
-       +===========================+==============+===============+
-       | add_annotation            | ✓            | ✓             |
-       +---------------------------+--------------+---------------+
-       | add_data                  | ✓            | ✓             |
-       +---------------------------+--------------+---------------+
-       | add_foci                  | ✓            | ✓             |
-       +---------------------------+--------------+---------------+
-       | add_head                  |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | add_label                 | ✓            | ✓             |
-       +---------------------------+--------------+---------------+
-       | add_sensors               |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | add_skull                 |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | add_text                  | ✓            | ✓             |
-       +---------------------------+--------------+---------------+
-       | add_volume_labels         |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | close                     | ✓            | ✓             |
-       +---------------------------+--------------+---------------+
-       | data                      | ✓            | ✓             |
-       +---------------------------+--------------+---------------+
-       | foci                      | ✓            |               |
-       +---------------------------+--------------+---------------+
-       | labels                    | ✓            | ✓             |
-       +---------------------------+--------------+---------------+
-       | remove_data               |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | remove_foci               | ✓            |               |
-       +---------------------------+--------------+---------------+
-       | remove_head               |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | remove_labels             | ✓            | ✓             |
-       +---------------------------+--------------+---------------+
-       | remove_annotations        | -            | ✓             |
-       +---------------------------+--------------+---------------+
-       | remove_sensors            |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | remove_skull              |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | remove_text               |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | remove_volume_labels      |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | scale_data_colormap       | ✓            |               |
-       +---------------------------+--------------+---------------+
-       | save_image                | ✓            | ✓             |
-       +---------------------------+--------------+---------------+
-       | save_movie                | ✓            | ✓             |
-       +---------------------------+--------------+---------------+
-       | screenshot                | ✓            | ✓             |
-       +---------------------------+--------------+---------------+
-       | show_view                 | ✓            | ✓             |
-       +---------------------------+--------------+---------------+
-       | TimeViewer                | ✓            | ✓             |
-       +---------------------------+--------------+---------------+
-       | enable_depth_peeling      |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | get_picked_points         |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | add_data(volume)          |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | view_layout               |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | flatmaps                  |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | vertex picking            |              | ✓             |
-       +---------------------------+--------------+---------------+
-       | label picking             |              | ✓             |
-       +---------------------------+--------------+---------------+
+       +-------------------------------------+--------------+---------------+
+       | 3D function:                        | surfer.Brain | mne.viz.Brain |
+       +=====================================+==============+===============+
+       | :meth:`add_annotation`              | ✓            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`add_data`                    | ✓            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`add_foci`                    | ✓            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`add_head`                    |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`add_label`                   | ✓            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`add_sensors`                 |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`add_skull`                   |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`add_text`                    | ✓            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`add_volume_labels`           |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`close`                       | ✓            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | data                                | ✓            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | foci                                | ✓            |               |
+       +-------------------------------------+--------------+---------------+
+       | labels                              | ✓            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`remove_data`                 |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`remove_head`                 |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`remove_labels`               | ✓            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`remove_annotations`          | -            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`remove_sensors`              |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`remove_skull`                |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`remove_text`                 |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`remove_volume_labels`        |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`save_image`                  | ✓            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`save_movie`                  | ✓            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`screenshot`                  | ✓            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`show_view`                   | ✓            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | TimeViewer                          | ✓            | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`get_picked_points`           |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | :meth:`add_data(volume) <add_data>` |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | view_layout                         |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | flatmaps                            |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | vertex picking                      |              | ✓             |
+       +-------------------------------------+--------------+---------------+
+       | label picking                       |              | ✓             |
+       +-------------------------------------+--------------+---------------+
     """
 
     def __init__(self, subject_id, hemi='both', surf='pial', title=None,
@@ -428,7 +412,7 @@ class Brain(object):
                  views='auto', offset='auto', show_toolbar=False,
                  offscreen=False, interaction='trackball', units='mm',
                  view_layout='vertical', silhouette=False, theme='auto',
-                 show=True):
+                 show=True, block=False):
         from ..backends.renderer import backend, _get_renderer
 
         if hemi is None:
@@ -472,6 +456,7 @@ class Brain(object):
         self.theme = theme
 
         self.time_viewer = False
+        self._block = block
         self._hemi = hemi
         self._units = units
         self._alpha = float(alpha)
@@ -634,6 +619,7 @@ class Brain(object):
         'Left': Decrease camera azimuth angle
         'Right': Increase camera azimuth angle
         """
+        from ..backends._utils import _qt_app_exec
         if self.time_viewer:
             return
         if not self._data:
@@ -728,6 +714,8 @@ class Brain(object):
         # finally, show the MplCanvas
         if self.show_traces:
             self.mpl_canvas.show()
+        if self._block:
+            _qt_app_exec(self._renderer.figure.store["app"])
 
     @safe_event
     def _clean(self):
@@ -2580,8 +2568,10 @@ class Brain(object):
             vertex ids (with ``coord_as_verts=True``).
         coords_as_verts : bool
             Whether the coords parameter should be interpreted as vertex ids.
-        map_surface : None
-            Surface to map coordinates through, or None to use raw coords.
+        map_surface : str | None
+            Surface to project the coordinates to, or None to use raw coords.
+            When set to a surface, each foci is positioned at the closest
+            vertex in the mesh.
         scale_factor : float
             Controls the size of the foci spheres (relative to 1cm).
         color : matplotlib color code
@@ -2599,23 +2589,38 @@ class Brain(object):
         """
         hemi = self._check_hemi(hemi, extras=['vol'])
 
-        # those parameters are not supported yet, only None is allowed
-        _check_option('map_surface', map_surface, [None])
-
         # Figure out how to interpret the first parameter
         if coords_as_verts:
             coords = self.geo[hemi].coords[coords]
+            map_surface = None
+
+        # Possibly map the foci coords through a surface
+        if map_surface is not None:
+            from scipy.spatial.distance import cdist
+            foci_surf = _Surface(self._subject_id, hemi, map_surface,
+                                 self._subjects_dir, offset=0,
+                                 units=self._units, x_dir=self._rigid[0, :3])
+            foci_surf.load_geometry()
+            foci_vtxs = np.argmin(cdist(foci_surf.coords, coords), axis=0)
+            coords = self.geo[hemi].coords[foci_vtxs]
 
         # Convert the color code
         color = _to_rgb(color)
 
         if self._units == 'm':
             scale_factor = scale_factor / 1000.
+
         for _, _, v in self._iter_views(hemi):
             self._renderer.sphere(center=coords, color=color,
                                   scale=(10. * scale_factor),
                                   opacity=alpha, resolution=resolution)
             self._renderer.set_camera(**views_dicts[hemi][v])
+
+        # Store the foci in the Brain._data dictionary
+        data_foci = coords
+        if 'foci' in self._data[hemi]:
+            data_foci = np.vstack((self._data[hemi]['foci'], data_foci))
+        self._data[hemi]['foci'] = data_foci
 
     @verbose
     def add_sensors(self, info, trans, meg=None, eeg='original', fnirs=True,
@@ -2914,7 +2919,10 @@ class Brain(object):
 
     def show(self):
         """Display the window."""
+        from ..backends._utils import _qt_app_exec
         self._renderer.show()
+        if self._block:
+            _qt_app_exec(self._renderer.figure.store["app"])
 
     @fill_doc
     def show_view(self, view=None, roll=None, distance=None, *,
@@ -2941,6 +2949,44 @@ class Brain(object):
         %(azimuth)s
         %(elevation)s
         %(focalpoint)s
+
+        Notes
+        -----
+        The builtin string views are the following perspectives, based on the
+        :term:`RAS` convention. If not otherwise noted, the view will have the
+        top of the brain (superior, +Z) in 3D space shown upward in the 2D
+        perspective:
+
+        ``'lateral'``
+            From the left or right side such that the lateral (outside)
+            surface of the given hemisphere is visible.
+        ``'medial'``
+            From the left or right side such that the medial (inside)
+            surface of the given hemisphere is visible (at least when in split
+            or single-hemi mode).
+        ``'rostral'``
+            From the front.
+        ``'caudal'``
+            From the rear.
+        ``'dorsal'``
+            From above, with the front of the brain pointing up.
+        ``'ventral'``
+            From below, with the front of the brain pointing up.
+        ``'frontal'``
+            From the front and slightly lateral, with the brain slightly
+            tilted forward (yielding a view from slightly above).
+        ``'parietal'``
+            From the rear and slightly lateral, with the brain slightly tilted
+            backward (yielding a view from slightly above).
+        ``'axial'``
+            From above with the brain pointing up (same as ``'dorsal'``).
+        ``'sagittal'``
+            From the right side.
+        ``'coronal'``
+            From the rear.
+
+        Three letter abbreviations (e.g., ``'lat'``) of all of the above are
+        also supported.
         """
         _validate_type(row, ('int-like', None), 'row')
         _validate_type(col, ('int-like', None), 'col')
@@ -3658,9 +3704,12 @@ class Brain(object):
             show[keep_idx] = 1
             label *= show
 
+    @deprecated('enable_depth_peeling is deprecated and will be '
+                'removed in 1.1')
     def enable_depth_peeling(self):
-        """Enable depth peeling."""
-        self._renderer.enable_depth_peeling()
+        """Enable depth peeling.
+        """
+        self._renderer._enable_depth_peeling()
 
     def get_picked_points(self):
         """Return the vertices of the picked points.

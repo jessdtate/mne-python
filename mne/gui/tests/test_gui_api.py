@@ -43,15 +43,28 @@ def test_gui_api(renderer_notebook, nbexec):
     renderer._dock_initialize(name='', area='left')
 
     # label (not interactive)
-    widget = renderer._dock_add_label('', align=True)
+    widget = renderer._dock_add_label(
+        value='',
+        align=False,
+        selectable=True,
+    )
+    widget = renderer._dock_add_label(
+        value='',
+        align=True,
+    )
     widget.update()
+    # labels are disabled by default with the notebook backend
     widget.set_enabled(False)
+    assert not widget.is_enabled()
+    widget.set_enabled(True)
+    assert widget.is_enabled()
 
     # ToolButton
     widget = renderer._dock_add_button(
         name='',
         callback=mock,
-        style='toolbutton'
+        style='toolbutton',
+        tooltip='button',
     )
     with _check_widget_trigger(widget, mock, None, None, get_value=False):
         widget.set_value(True)
@@ -59,34 +72,68 @@ def test_gui_api(renderer_notebook, nbexec):
     # PushButton
     widget = renderer._dock_add_button(
         name='',
-        callback=mock
+        callback=mock,
     )
     with _check_widget_trigger(widget, mock, None, None, get_value=False):
         widget.set_value(True)
 
     # slider
-    widget = renderer._dock_add_slider('', 0, [0, 10], mock)
+    widget = renderer._dock_add_slider(
+        name='',
+        value=0,
+        rng=[0, 10],
+        callback=mock,
+        tooltip='slider',
+    )
     with _check_widget_trigger(widget, mock, 0, 5):
         widget.set_value(5)
 
     # check box
-    widget = renderer._dock_add_check_box('', False, mock)
+    widget = renderer._dock_add_check_box(
+        name='',
+        value=False,
+        callback=mock,
+        tooltip='check box',
+    )
     with _check_widget_trigger(widget, mock, False, True):
         widget.set_value(True)
 
     # spin box
-    renderer._dock_add_spin_box('', 0, [0, 1], mock, step=0.1)
-    widget = renderer._dock_add_spin_box('', 0, [0, 1], mock, step=None)
+    renderer._dock_add_spin_box(
+        name='',
+        value=0,
+        rng=[0, 1],
+        callback=mock,
+        step=0.1,
+        tooltip='spin box',
+    )
+    widget = renderer._dock_add_spin_box(
+        name='',
+        value=0,
+        rng=[0, 1],
+        callback=mock,
+        step=None,
+    )
     with _check_widget_trigger(widget, mock, 0, 0.5):
         widget.set_value(0.5)
 
     # combo box
-    widget = renderer._dock_add_combo_box('', 'foo', ['foo', 'bar'], mock)
+    widget = renderer._dock_add_combo_box(
+        name='',
+        value='foo',
+        rng=['foo', 'bar'],
+        callback=mock,
+        tooltip='combo box',
+    )
     with _check_widget_trigger(widget, mock, 'foo', 'bar'):
         widget.set_value('bar')
 
     # radio buttons
-    widget = renderer._dock_add_radio_buttons('foo', ['foo', 'bar'], mock)
+    widget = renderer._dock_add_radio_buttons(
+        value='foo',
+        rng=['foo', 'bar'],
+        callback=mock,
+    )
     with _check_widget_trigger(widget, mock, 'foo', 'bar', get_value=False):
         widget.set_value(1, 'bar')
     assert widget.get_value(0) == 'foo'
@@ -94,14 +141,41 @@ def test_gui_api(renderer_notebook, nbexec):
     widget.set_enabled(False)
 
     # text field
-    widget = renderer._dock_add_text('', 'foo', '')
-    with _check_widget_trigger(widget, mock, 'foo', 'bar', call_count=False):
+    widget = renderer._dock_add_text(
+        name='',
+        value='foo',
+        placeholder='',
+        callback=mock,
+    )
+    with _check_widget_trigger(widget, mock, 'foo', 'bar'):
         widget.set_value('bar')
 
     # file button
-    renderer._dock_add_file_button('', '', mock, directory=True)
-    renderer._dock_add_file_button('', '', mock, input_text_widget=False)
-    widget = renderer._dock_add_file_button('', '', mock, save=True)
+    renderer._dock_add_file_button(
+        name='',
+        desc='',
+        func=mock,
+        is_directory=True,
+        tooltip='file button',
+    )
+    renderer._dock_add_file_button(
+        name='',
+        desc='',
+        func=mock,
+        initial_directory='',
+    )
+    renderer._dock_add_file_button(
+        name='',
+        desc='',
+        func=mock,
+        input_text_widget=False,
+    )
+    widget = renderer._dock_add_file_button(
+        name='',
+        desc='',
+        func=mock,
+        save=True
+    )
     widget.set_value(0, 'foo')  # modify the text field (not interactive)
     assert widget.get_value(0) == 'foo'
     # XXX: the internal file dialogs may hang without signals
@@ -110,13 +184,154 @@ def test_gui_api(renderer_notebook, nbexec):
 
     renderer._dock_initialize(name='', area='right')
     renderer._dock_named_layout(name='')
-    renderer._dock_add_group_box(name='')
+    for collapse in (None, True, False):
+        renderer._dock_add_group_box(name='', collapse=collapse)
     renderer._dock_add_stretch()
     renderer._dock_add_layout()
     renderer._dock_finalize()
     renderer._dock_hide()
     renderer._dock_show()
     # --- END: dock ---
+
+    # --- BEGIN: tool bar ---
+    renderer._tool_bar_initialize(
+        name="default",
+        window=None,
+    )
+    renderer._tool_bar_load_icons()
+
+    # button
+    assert 'reset' not in renderer.actions
+    renderer._tool_bar_add_button(
+        name='reset',
+        desc='',
+        func=mock,
+        icon_name='help',
+    )
+    assert 'reset' in renderer.actions
+
+    # icon
+    renderer._tool_bar_update_button_icon(
+        name='reset',
+        icon_name='reset',
+    )
+
+    # text
+    renderer._tool_bar_add_text(
+        name='',
+        value='',
+        placeholder='',
+    )
+
+    # spacer
+    renderer._tool_bar_add_spacer()
+
+    # file button
+    assert 'help' not in renderer.actions
+    renderer._tool_bar_add_file_button(
+        name='help',
+        desc='',
+        func=mock,
+        shortcut=None,
+    )
+    assert 'help' in renderer.actions
+
+    # play button
+    assert 'play' not in renderer.actions
+    renderer._tool_bar_add_play_button(
+        name='play',
+        desc='',
+        func=mock,
+        shortcut=None,
+    )
+    assert 'play' in renderer.actions
+
+    # theme
+    renderer._tool_bar_set_theme(theme='auto')
+    renderer._tool_bar_set_theme(theme='dark')
+    # --- END: tool bar ---
+
+    # --- BEGIN: menu bar ---
+    renderer._menu_initialize()
+
+    # submenu
+    renderer._menu_add_submenu(name='foo', desc='foo')
+    assert 'foo' in renderer._menus
+    assert 'foo' in renderer._menu_actions
+
+    # button
+    renderer._menu_add_button(
+        menu_name='foo',
+        name='bar',
+        desc='bar',
+        func=mock,
+    )
+    assert 'bar' in renderer._menu_actions['foo']
+    with _check_widget_trigger(None, mock, '', '', get_value=False):
+        renderer._menu_actions['foo']['bar'].trigger()
+
+    # --- END: menu bar ---
+
+    # --- BEGIN: status bar ---
+    renderer._status_bar_initialize()
+    renderer._status_bar_update()
+
+    # label
+    widget = renderer._status_bar_add_label(value='foo', stretch=0)
+    assert widget.get_value() == 'foo'
+
+    # progress bar
+    widget = renderer._status_bar_add_progress_bar(stretch=0)
+    # by default, get_value() is -1 for Qt and 0 for Ipywidgets
+    widget.set_value(0)
+    assert widget.get_value() == 0
+    # --- END: status bar ---
+
+    # --- BEGIN: tooltips ---
+    widget = renderer._dock_add_button(
+        name='',
+        callback=mock,
+        tooltip='foo'
+    )
+    assert widget.get_tooltip() == 'foo'
+    # Change it …
+    widget.set_tooltip('bar')
+    assert widget.get_tooltip() == 'bar'
+    # --- END: tooltips ---
+
+    # --- BEGIN: dialog ---
+    # dialogs are not supported yet on notebook
+    if renderer._kind == 'qt':
+        # warning
+        buttons = ["Save", "Cancel"]
+        widget = renderer._dialog_warning(
+            title='',
+            text='',
+            info_text='',
+            callback=mock,
+            buttons=buttons,
+            modal=False,
+        )
+        widget.show()
+        for button in buttons:
+            with _check_widget_trigger(None, mock, '', '', get_value=False):
+                widget.trigger(button=button)
+            assert mock.call_args.args == (button,)
+
+        # buttons list empty means OK button (default)
+        button = 'OK'
+        widget = renderer._dialog_warning(
+            title='',
+            text='',
+            info_text='',
+            callback=mock,
+            modal=False,
+        )
+        widget.show()
+        with _check_widget_trigger(None, mock, '', '', get_value=False):
+            widget.trigger(button=button)
+        assert mock.call_args.args == (button,)
+    # --- END: dialog ---
 
     renderer.show()
     renderer.close()

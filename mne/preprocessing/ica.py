@@ -54,7 +54,7 @@ from ..utils import (logger, check_fname, _check_fname, verbose,
                      copy_function_doc_to_method_doc, _pl, warn, Bunch,
                      _check_preload, _check_compensation_grade, fill_doc,
                      _check_option, _PCA, int_like, _require_version,
-                     _check_all_same_channel_names)
+                     _check_all_same_channel_names, _VerboseDep)
 
 from ..fixes import _get_args, _safe_svd
 from ..filter import filter_data
@@ -136,7 +136,7 @@ _KNOWN_ICA_METHODS = ('fastica', 'infomax', 'picard')
 
 
 @fill_doc
-class ICA(ContainsMixin):
+class ICA(ContainsMixin, _VerboseDep):
     u"""Data decomposition using Independent Component Analysis (ICA).
 
     This object estimates independent components from :class:`mne.io.Raw`,
@@ -396,7 +396,6 @@ class ICA(ContainsMixin):
                     'supported')
 
         self.current_fit = 'unfitted'
-        self.verbose = verbose
         self.n_components = n_components
         # In newer ICAs this should always be None, but keep it for
         # backward compat with older versions of MNE that used it
@@ -590,7 +589,7 @@ class ICA(ContainsMixin):
         %(reject_by_annotation_raw)s
 
             .. versionadded:: 0.14.0
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -1133,7 +1132,7 @@ class ICA(ContainsMixin):
         %(reject_by_annotation_all)s
 
             .. versionadded:: 0.14.0
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -1330,7 +1329,7 @@ class ICA(ContainsMixin):
 
             .. versionadded:: 0.14.0
         %(measure)s
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -1466,7 +1465,7 @@ class ICA(ContainsMixin):
 
             .. versionadded:: 0.21
         %(measure)s
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -1616,7 +1615,7 @@ class ICA(ContainsMixin):
 
             .. versionadded:: 0.14.0
         %(measure)s
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -1682,7 +1681,7 @@ class ICA(ContainsMixin):
         stop : int | float | None
             Last sample to not include. If float, data will be interpreted as
             time in seconds. If None, data will be used to the last sample.
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -1882,7 +1881,7 @@ class ICA(ContainsMixin):
         %(overwrite)s
 
             .. versionadded:: 1.0
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -1952,12 +1951,14 @@ class ICA(ContainsMixin):
     def plot_sources(self, inst, picks=None, start=None,
                      stop=None, title=None, show=True, block=False,
                      show_first_samp=False, show_scrollbars=True,
-                     time_format='float'):
+                     time_format='float', precompute='auto',
+                     use_opengl=None):
         return plot_ica_sources(self, inst=inst, picks=picks,
                                 start=start, stop=stop, title=title, show=show,
                                 block=block, show_first_samp=show_first_samp,
                                 show_scrollbars=show_scrollbars,
-                                time_format=time_format)
+                                time_format=time_format,
+                                precompute=precompute, use_opengl=use_opengl)
 
     #@copy_function_doc_to_method_doc(plot_ica_scores)
     def plot_scores(self, scores, exclude=None, labels=None, axhline=None,

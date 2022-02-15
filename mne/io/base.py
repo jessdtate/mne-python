@@ -47,7 +47,7 @@ from ..utils import (_check_fname, _check_pandas_installed, sizeof_fmt,
                      copy_function_doc_to_method_doc, _validate_type,
                      _check_preload, _get_argvalues, _check_option,
                      _build_data_frame, _convert_times, _scale_dataframe_data,
-                     _check_time_format, _arange_div)
+                     _check_time_format, _arange_div, _VerboseDep)
 from ..defaults import _handle_default
 from ..viz import plot_raw, plot_raw_psd, plot_raw_psd_topo, _RAW_CLIP_DEF
 from ..event import find_events, concatenate_events
@@ -121,7 +121,8 @@ class TimeMixin(object):
 
 @fill_doc
 class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
-              InterpolationMixin, TimeMixin, SizeMixin, FilterMixin):
+              InterpolationMixin, TimeMixin, SizeMixin, FilterMixin,
+              _VerboseDep):
     """Base class for Raw data.
 
     Parameters
@@ -187,7 +188,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
                  filenames=(None,), raw_extras=(None,),
                  orig_format='double', dtype=np.float64,
                  buffer_size_sec=1., orig_units=None,
-                 verbose=None):  # noqa: D102
+                 *, verbose=None):  # noqa: D102
         # wait until the end to preload data, but triage here
         if isinstance(preload, np.ndarray):
             # some functions (e.g., filtering) only work w/64-bit data
@@ -226,7 +227,6 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
         if len(bad) > 0:
             raise ValueError('Bad cals for channels %s'
                              % {ii: self.ch_names[ii] for ii in bad})
-        self.verbose = verbose
         self._cals = cals
         self._raw_extras = list(dict() if r is None else r for r in raw_extras)
         for r in self._raw_extras:
@@ -303,7 +303,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
         ----------
         grade : int
             CTF gradient compensation level.
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -361,7 +361,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
             to store the data.
         projector : array
             SSP operator to apply to the data.
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -539,7 +539,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
 
         Parameters
         ----------
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -663,7 +663,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
         emit_warning : bool
             Whether to emit warnings when cropping or omitting annotations.
         %(on_missing_ch_names)s
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -864,7 +864,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
             ignored if the ``stop`` parameter is defined.
 
             .. versionadded:: 0.24.0
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -990,7 +990,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
         %(applyfun_chwise)s
 
             .. versionadded:: 0.18
-        %(verbose_meth)s
+        %(verbose)s
         %(kwarg_fun)s
 
         Returns
@@ -1052,14 +1052,15 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
         ----------
         freqs : float | array of float | None
             Specific frequencies to filter out from data, e.g.,
-            np.arange(60, 241, 60) in the US or np.arange(50, 251, 50) in
-            Europe. None can only be used with the mode 'spectrum_fit',
-            where an F test is used to find sinusoidal components.
+            ``np.arange(60, 241, 60)`` in the US or ``np.arange(50, 251, 50)``
+            in Europe. ``None`` can only be used with the mode
+            ``'spectrum_fit'``, where an F test is used to find sinusoidal
+            components.
         %(picks_all_data)s
         %(filter_length_notch)s
         notch_widths : float | array of float | None
             Width of each stop band (centred at each freq in freqs) in Hz.
-            If None, freqs / 200 is used.
+            If None, ``freqs / 200`` is used.
         trans_bandwidth : float
             Width of the transition band in Hz.
             Only used for ``method='fir'``.
@@ -1071,8 +1072,8 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
             Only used in 'spectrum_fit' mode.
         p_value : float
             P-value to use in F-test thresholding to determine significant
-            sinusoidal components to remove when method='spectrum_fit' and
-            freqs=None. Note that this will be Bonferroni corrected for the
+            sinusoidal components to remove when ``method='spectrum_fit'`` and
+            ``freqs=None``. Note that this will be Bonferroni corrected for the
             number of frequencies, so large p-values may be justified.
         %(phase)s
         %(fir_window)s
@@ -1081,7 +1082,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
             The default is ``'reflect_limited'``.
 
             .. versionadded:: 0.15
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -1166,7 +1167,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
             The default is ``'reflect_limited'``.
 
             .. versionadded:: 0.15
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -1409,7 +1410,7 @@ class BaseRaw(ProjMixin, ContainsMixin, UpdateChannelsMixin, SetChannelsMixin,
         %(split_naming)s
 
             .. versionadded:: 0.17
-        %(verbose_meth)s
+        %(verbose)s
 
         Notes
         -----

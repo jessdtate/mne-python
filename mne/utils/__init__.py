@@ -3,7 +3,7 @@
 # is changed here!
 _doc_special_members = ('__contains__', '__getitem__', '__iter__', '__len__',
                         '__add__', '__sub__', '__mul__', '__div__',
-                        '__neg__', '__hash__')
+                        '__neg__')
 
 from ._bunch import Bunch, BunchConst, BunchConstNamed
 from .check import (check_fname, check_version, check_random_state,
@@ -34,7 +34,7 @@ from .fetching import _url_to_local_path
 from ._logging import (verbose, logger, set_log_level, set_log_file,
                        use_log_level, catch_logging, warn, filter_out_warnings,
                        wrapped_stdout, _get_call_line, _record_warnings,
-                       ClosingStringIO)
+                       ClosingStringIO, _VerboseDep)
 from .misc import (run_subprocess, _pl, _clean_names, pformat, _file_like,
                    _explain_exception, _get_argvalues, sizeof_fmt,
                    running_subprocess, _DefaultEventParser,

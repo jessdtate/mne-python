@@ -356,16 +356,22 @@ def test_report_raw_psd_and_date(tmp_path):
 @testing.requires_testing_data
 def test_render_add_sections(renderer, tmp_path):
     """Test adding figures/images to section."""
+    from pyvista.plotting import plotting
     tempdir = str(tmp_path)
     report = Report(subjects_dir=subjects_dir)
     # Check add_figure functionality
+    plt.close('all')
+    assert len(plt.get_fignums()) == 0
     fig = plt.plot([1, 2], [1, 2])[0].figure
+    assert len(plt.get_fignums()) == 1
 
     report.add_figure(fig=fig, title='evoked response', image_format='svg')
     assert 'caption' not in report._content[-1].html
+    assert len(plt.get_fignums()) == 1
 
     report.add_figure(fig=fig, title='evoked with caption', caption='descr')
     assert 'caption' in report._content[-1].html
+    assert len(plt.get_fignums()) == 1
 
     # Check add_image with png
     img_fname = op.join(tempdir, 'testimage.png')
@@ -377,10 +383,14 @@ def test_render_add_sections(renderer, tmp_path):
 
     evoked = read_evokeds(evoked_fname, condition='Left Auditory',
                           baseline=(-0.2, 0.0))
+    n_before = len(plotting._ALL_PLOTTERS)
     fig = plot_alignment(evoked.info, trans_fname, subject='sample',
                          subjects_dir=subjects_dir)
+    n_after = n_before + 1
+    assert n_after == len(plotting._ALL_PLOTTERS)
 
     report.add_figure(fig=fig, title='random image')
+    assert n_after == len(plotting._ALL_PLOTTERS)  # not closed
     assert (repr(report))
     fname = op.join(str(tmp_path), 'test.html')
     report.save(fname, open_browser=False)
@@ -709,7 +719,7 @@ def test_manual_report_2d(tmp_path, invisible_fig):
     )
     epochs_with_metadata = Epochs(
         raw=raw, events=metadata_events, event_id=metadata_event_id,
-        baseline=None,  metadata=metadata
+        baseline=None, metadata=metadata
     )
     evokeds = read_evokeds(evoked_fname)
     evoked = evokeds[0].pick('eeg')
@@ -751,7 +761,7 @@ def test_manual_report_2d(tmp_path, invisible_fig):
         match='requested to calculate PSD on a duration'
     ):
         r.add_epochs(
-            epochs=epochs_with_metadata, title='my epochs 2',  psd=100000000,
+            epochs=epochs_with_metadata, title='my epochs 2', psd=100000000,
             projs=False
         )
 
@@ -884,33 +894,32 @@ def test_sorting(tmp_path):
 
 
 @pytest.mark.parametrize(
-    ('tags', 'not_a_collection', 'wrong_dtype', 'invalid_chars'),
+    ('tags', 'str_or_array', 'wrong_dtype', 'invalid_chars'),
     [
-        # not a collection
-        ('foo', True, False, False),
-        (123, True, False, False),
         # wrong dtype
-        ([1, 2, 3], False, True, False),
-        (['foo', 1], False, True, False),
+        (123, False, True, False),
+        ([1, 2, 3], True, True, False),
+        (['foo', 1], True, True, False),
         # invalid characters
-        (['foo bar'], False, False, True),
-        (['foo"'], False, False, True),
-        (['foo\n'], False, False, True),
+        (['foo bar'], True, False, True),
+        (['foo"'], True, False, True),
+        (['foo\n'], True, False, True),
         # all good
-        (['foo'], False, False, False),
-        (['foo', 'bar'], False, False, False),
-        (np.array(['foo', 'bar']), False, False, False)
+        ('foo', True, False, False),
+        (['foo'], True, False, False),
+        (['foo', 'bar'], True, False, False),
+        (np.array(['foo', 'bar']), True, False, False)
     ]
 )
-def test_tags(tags, not_a_collection, wrong_dtype, invalid_chars):
+def test_tags(tags, str_or_array, wrong_dtype, invalid_chars):
     """Test handling of invalid tags."""
     r = Report()
 
-    if not_a_collection:
-        with pytest.raises(TypeError, match='must be a collection of str'):
+    if not str_or_array:
+        with pytest.raises(TypeError, match='must be a string.*or an array.*'):
             r.add_code(code='foo', title='bar', tags=tags)
     elif wrong_dtype:
-        with pytest.raises(TypeError, match='must be strings'):
+        with pytest.raises(TypeError, match='tags must be strings'):
             r.add_code(code='foo', title='bar', tags=tags)
     elif invalid_chars:
         with pytest.raises(ValueError, match='contained invalid characters'):

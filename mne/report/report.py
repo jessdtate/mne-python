@@ -40,10 +40,11 @@ from ..proj import read_proj
 from .._freesurfer import _reorient_image, _mri_orientation
 from ..utils import (logger, verbose, get_subjects_dir, warn, _ensure_int,
                      fill_doc, _check_option, _validate_type, _safe_input,
-                     _path_like, use_log_level, _check_fname,
+                     _path_like, use_log_level, _check_fname, _VerboseDep,
                      _check_ch_locs, _import_h5io_funcs)
 from ..viz import (plot_events, plot_alignment, plot_cov, plot_projs_topomap,
-                   plot_compare_evokeds, set_3d_view, get_3d_backend)
+                   plot_compare_evokeds, set_3d_view, get_3d_backend,
+                   Figure3D)
 from ..viz.misc import _plot_mri_contours, _get_bem_plotting_surfaces
 from ..viz.utils import _ndarray_to_fig, tight_layout
 from ..forward import read_forward_solution, Forward
@@ -265,19 +266,24 @@ class _ContentElement:
 
 def _check_tags(tags) -> Tuple[str]:
     # Must be iterable, but not a string
-    if (isinstance(tags, str) or not isinstance(tags, (Sequence, np.ndarray))):
+    if isinstance(tags, str):
+        tags = (tags,)
+    elif isinstance(tags, (Sequence, np.ndarray)):
+        tags = tuple(tags)
+    else:
         raise TypeError(
-            f'tags must be a collection of str, but got {type(tags)} '
+            f'tags must be a string (without spaces or special characters) or '
+            f'an array-like object of such strings, but got {type(tags)} '
             f'instead: {tags}'
         )
-    tags = tuple(tags)
 
     # Check for invalid dtypes
     bad_tags = [tag for tag in tags
                 if not isinstance(tag, str)]
     if bad_tags:
         raise TypeError(
-            f'tags must be strings, but got the following instead: '
+            f'All tags must be strings without spaces or special characters, '
+            f'but got the following instead: '
             f'{", ".join([str(tag) for tag in bad_tags])}'
         )
 
@@ -322,16 +328,21 @@ def _constrain_fig_resolution(fig, *, max_width, max_res):
     fig.set_dpi(dpi)
 
 
-def _fig_to_img(fig, *, image_format='png', auto_close=True):
+def _fig_to_img(fig, *, image_format='png', own_figure=True):
     """Plot figure and create a binary image."""
     # fig can be ndarray, mpl Figure, PyVista Figure
     import matplotlib.pyplot as plt
     from matplotlib.figure import Figure
+    _validate_type(fig, (np.ndarray, Figure, Figure3D), 'fig')
     if isinstance(fig, np.ndarray):
+        # In this case, we are creating the fig, so we might as well
+        # auto-close in all cases
         fig = _ndarray_to_fig(fig)
-        _constrain_fig_resolution(
-            fig, max_width=MAX_IMG_WIDTH, max_res=MAX_IMG_RES
-        )
+        if own_figure:
+            _constrain_fig_resolution(
+                fig, max_width=MAX_IMG_WIDTH, max_res=MAX_IMG_RES
+            )
+        own_figure = True  # close the figure we just created
     elif not isinstance(fig, Figure):
         from ..viz.backends.renderer import backend, MNE_3D_BACKEND_TESTING
         backend._check_3d_figure(figure=fig)
@@ -340,12 +351,14 @@ def _fig_to_img(fig, *, image_format='png', auto_close=True):
         else:  # Testing mode
             img = np.zeros((2, 2, 3))
 
-        if auto_close:
+        if own_figure:
             backend._close_3d_figure(figure=fig)
         fig = _ndarray_to_fig(img)
-        _constrain_fig_resolution(
-            fig, max_width=MAX_IMG_WIDTH, max_res=MAX_IMG_RES
-        )
+        if own_figure:
+            _constrain_fig_resolution(
+                fig, max_width=MAX_IMG_WIDTH, max_res=MAX_IMG_RES
+            )
+        own_figure = True  # close the fig we just created
 
     output = BytesIO()
     logger.debug(
@@ -361,7 +374,7 @@ def _fig_to_img(fig, *, image_format='png', auto_close=True):
         )
         fig.savefig(output, format=image_format, dpi=fig.get_dpi())
 
-    if auto_close:
+    if own_figure:
         plt.close(fig)
     output = output.getvalue()
     return (output.decode('utf-8') if image_format == 'svg' else
@@ -432,7 +445,7 @@ def _get_bem_contour_figs_as_arrays(
     return out
 
 
-def _iterate_trans_views(function, **kwargs):
+def _iterate_trans_views(function, alpha, **kwargs):
     """Auxiliary function to iterate over views in trans fig."""
     from ..viz import create_3d_figure
     from ..viz.backends.renderer import MNE_3D_BACKEND_TESTING
@@ -442,9 +455,11 @@ def _iterate_trans_views(function, **kwargs):
     from ..viz.backends.renderer import backend
     try:
         try:
-            return _itv(function, fig, surfaces=['head-dense'], **kwargs)
+            return _itv(
+                function, fig, surfaces={'head-dense': alpha}, **kwargs
+            )
         except IOError:
-            return _itv(function, fig, surfaces=['head'], **kwargs)
+            return _itv(function, fig, surfaces={'head': alpha}, **kwargs)
     finally:
         backend._close_3d_figure(fig)
 
@@ -619,7 +634,7 @@ def _check_image_format(rep, image_format):
 
 
 @fill_doc
-class Report(object):
+class Report(_VerboseDep):
     r"""Object for rendering HTML.
 
     Parameters
@@ -703,9 +718,11 @@ class Report(object):
     .. versionadded:: 0.8.0
     """
 
+    @verbose
     def __init__(self, info_fname=None, subjects_dir=None,
                  subject=None, title=None, cov_fname=None, baseline=None,
-                 image_format='png', raw_psd=False, projs=False, verbose=None):
+                 image_format='png', raw_psd=False, projs=False, *,
+                 verbose=None):
         self.info_fname = str(info_fname) if info_fname is not None else None
         self.cov_fname = str(cov_fname) if cov_fname is not None else None
         self.baseline = baseline
@@ -716,7 +733,6 @@ class Report(object):
         self.title = title
         self.image_format = _check_image_format(None, image_format)
         self.projs = projs
-        self.verbose = verbose
 
         self._dom_id = 0
         self._content = []
@@ -765,7 +781,7 @@ class Report(object):
         return (
             'baseline', 'cov_fname', 'include', '_content', 'image_format',
             'info_fname', '_dom_id', 'raw_psd', 'projs',
-            'subjects_dir', 'subject', 'title', 'data_path', 'lang', 'verbose',
+            'subjects_dir', 'subject', 'title', 'data_path', 'lang',
             'fname'
         )
 
@@ -1236,7 +1252,7 @@ class Report(object):
 
     @fill_doc
     def add_trans(self, trans, *, info, title, subject=None, subjects_dir=None,
-                  tags=('coregistration',), replace=False):
+                  alpha=None, tags=('coregistration',), replace=False):
         """Add a coregistration visualization to the report.
 
         Parameters
@@ -1254,6 +1270,10 @@ class Report(object):
             report creation.
         subjects_dir : path-like | None
             The FreeSurfer ``SUBJECTS_DIR``.
+        alpha : float | None
+            The level of opacity to apply to the head surface. If a float, must
+            be between 0 and 1 (inclusive), where 1 means fully opaque. If
+            ``None``, will use the MNE-Python default value.
         %(report_tags)s
         %(report_replace)s
 
@@ -1268,6 +1288,7 @@ class Report(object):
             info=info,
             subject=subject,
             subjects_dir=subjects_dir,
+            alpha=alpha,
             title=title,
             tags=tags
         )
@@ -1747,7 +1768,7 @@ class Report(object):
             The title of the element(s) to remove.
 
             .. versionadded:: 0.24.0
-        tags : array-like of str | None
+        tags : array-like of str | str | None
              If supplied, restrict the operation to elements with the supplied
              tags.
 
@@ -1913,10 +1934,10 @@ class Report(object):
 
         Parameters
         ----------
-        fig : matplotlib.figure.Figure | PyVista renderer | array | array-like of matplotlib.figure.Figure | array-like of PyVista renderer | array-like of array
+        fig : matplotlib.figure.Figure | Figure3D | array | array-like of matplotlib.figure.Figure | array-like of Figure3D | array-like of array
             One or more figures to add to the report. All figures must be an
             instance of :class:`matplotlib.figure.Figure`,
-            PyVista renderer, or :class:`numpy.ndarray`. If
+            :class:`mne.viz.Figure3D`, or :class:`numpy.ndarray`. If
             multiple figures are passed, they will be added as "slides"
             that can be navigated using buttons and a slider element.
         title : str
@@ -1963,7 +1984,8 @@ class Report(object):
 
         assert figs
         if len(figs) == 1:
-            img = _fig_to_img(fig=figs[0], image_format=image_format)
+            img = _fig_to_img(fig=figs[0], image_format=image_format,
+                              own_figure=False)
             dom_id = self._get_dom_id()
             html = _html_image_element(
                 img=img, div_klass='custom-image', img_klass='custom-image',
@@ -1973,7 +1995,8 @@ class Report(object):
         else:
             html, dom_id = self._render_slider(
                 figs=figs, imgs=None, title=title, captions=captions,
-                start_idx=0, image_format=image_format, tags=tags
+                start_idx=0, image_format=image_format, tags=tags,
+                own_figure=False
             )
 
         self._add_or_replace(
@@ -2110,7 +2133,7 @@ class Report(object):
         )
 
     def _render_slider(self, *, figs, imgs, title, captions, start_idx,
-                       image_format, tags, klass=''):
+                       image_format, tags, klass='', own_figure=True):
         if figs is not None and imgs is not None:
             raise ValueError('Must only provide either figs or imgs')
 
@@ -2124,10 +2147,10 @@ class Report(object):
                 f'Number of captions ({len(captions)}) must be equal to the '
                 f'number of images ({len(imgs)})'
             )
-        elif figs:
-            imgs = [_fig_to_img(fig=fig, image_format=image_format)
+        elif figs:  # figs can be None if imgs is provided
+            imgs = [_fig_to_img(fig=fig, image_format=image_format,
+                                own_figure=own_figure)
                     for fig in figs]
-
         dom_id = self._get_dom_id()
         html = _html_slider_element(
             id=dom_id,
@@ -2324,7 +2347,7 @@ class Report(object):
         %(topomap_kwargs)s
 
             .. versionadded:: 0.24.0
-        %(verbose_meth)s
+        %(verbose)s
         """
         _validate_type(data_path, 'path-like', 'data_path')
         data_path = str(data_path)
@@ -2492,7 +2515,7 @@ class Report(object):
             -> bem -> forward-solution -> inverse-operator -> source-estimate.
 
             .. versionadded:: 0.24.0
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
@@ -2900,7 +2923,7 @@ class Report(object):
                      f'create joint plot')
                 continue
 
-            with use_log_level(level=False):
+            with use_log_level(False):
                 fig = evoked.copy().pick(ch_type, verbose=False).plot_joint(
                     ts_args=dict(gfp=True),
                     title=None,
@@ -3374,7 +3397,7 @@ class Report(object):
         epochs.load_data()
 
         for ch_type in ch_types:
-            with use_log_level(level=False):
+            with use_log_level(False):
                 figs = epochs.copy().pick(ch_type, verbose=False).plot_image(
                     show=False
                 )
@@ -3479,8 +3502,8 @@ class Report(object):
 
         return htmls
 
-    def _render_trans(self, *, trans, info, subject, subjects_dir, title,
-                      tags):
+    def _render_trans(self, *, trans, info, subject, subjects_dir, alpha,
+                      title, tags):
         """Render trans (only PNG)."""
         if not isinstance(trans, Transform):
             trans = read_trans(trans)
@@ -3492,7 +3515,7 @@ class Report(object):
                       meg=['helmet', 'sensors'], show_axes=True,
                       coord_frame='mri')
         img, caption = _iterate_trans_views(
-            function=plot_alignment, **kwargs)
+            function=plot_alignment, alpha=alpha, **kwargs)
 
         dom_id = self._get_dom_id()
         html = _html_image_element(

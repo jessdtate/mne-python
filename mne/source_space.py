@@ -136,11 +136,11 @@ class SourceSpaces(list):
             produced during coregistration. If trans is None, an identity
             matrix is assumed. This is only needed when the source space is in
             head coordinates.
-        %(verbose_meth)s
+        %(verbose)s
 
         Returns
         -------
-        fig : instance of PyVista renderer
+        fig : instance of Figure3D
             The figure.
         """
         from .viz import plot_alignment
@@ -277,7 +277,7 @@ class SourceSpaces(list):
         fname : str
             File to write.
         %(overwrite)s
-        %(verbose_meth)s
+        %(verbose)s
         """
         write_source_spaces(fname, self, overwrite=overwrite)
 
@@ -323,7 +323,7 @@ class SourceSpaces(list):
         %(overwrite)s
 
             .. versionadded:: 0.19
-        %(verbose_meth)s
+        %(verbose)s
 
         Notes
         -----

@@ -68,6 +68,8 @@ def set_memmap_min_size(memmap_min_size):
 # List the known configuration values
 known_config_types = (
     'MNE_3D_OPTION_ANTIALIAS',
+    'MNE_3D_OPTION_DEPTH_PEELING',
+    'MNE_3D_OPTION_SMOOTH_SHADING',
     'MNE_BROWSE_RAW_SIZE',
     'MNE_BROWSER_BACKEND',
     'MNE_BROWSER_USE_OPENGL',
@@ -81,7 +83,6 @@ known_config_types = (
     'MNE_COREG_INTERACTION',
     'MNE_COREG_MARK_INSIDE',
     'MNE_COREG_PREPARE_BEM',
-    'MNE_COREG_PROJECT_EEG',
     'MNE_COREG_ORIENT_TO_SURFACE',
     'MNE_COREG_SCALE_LABELS',
     'MNE_COREG_SCALE_BY_DISTANCE',
@@ -136,6 +137,8 @@ known_config_types = (
 # These allow for partial matches, e.g. 'MNE_STIM_CHANNEL_1' is okay key
 known_config_wildcards = (
     'MNE_STIM_CHANNEL',
+    'MNE_DATASETS_FNIRS',
+    'MNE_NIRS',
 )
 
 
@@ -280,7 +283,7 @@ def set_config(key, value, home_dir=None, set_env=True):
         value = str(value)
 
     if key not in known_config_types and not \
-            any(k in key for k in known_config_wildcards):
+            any(key.startswith(k) for k in known_config_wildcards):
         warn('Setting non-standard config type: "%s"' % key)
 
     # Read all previous values
@@ -548,11 +551,12 @@ def sys_info(fid=None, show_paths=False, *, dependencies='user'):
     use_mod_names = ('mne', 'numpy', 'scipy', 'matplotlib', '', 'sklearn',
                      'numba', 'nibabel', 'nilearn', 'dipy', 'cupy', 'pandas',
                      'pyvista', 'pyvistaqt', 'ipyvtklink', 'vtk',
-                     'PyQt5', 'ipympl', 'mne_qt_browser', 'pooch')
+                     'PyQt5', 'ipympl', 'pooch', '', 'mne_bids', 'mne_nirs',
+                     'mne_features', 'mne_qt_browser', 'mne_connectivity')
     if dependencies == 'developer':
         use_mod_names += (
             '', 'sphinx', 'sphinx_gallery', 'numpydoc', 'pydata_sphinx_theme',
-            'mne_bids', 'pytest', 'nbclient')
+            'pytest', 'nbclient')
     for mod_name in use_mod_names:
         if mod_name == '':
             out += '\n'

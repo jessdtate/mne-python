@@ -715,7 +715,7 @@ def _assemble_kernel(inv, label, method, pick_ori, use_cps=True, verbose=None):
         set, these correspond to the vertices in the label. Otherwise, all
         vertex numbers are returned.
     source_nn : array, shape (3 * n_vertices, 3)
-        The direction in carthesian coordicates of the direction of the source
+        The direction in cartesian coordicates of the direction of the source
         dipoles.
     """  # noqa: E501
     eigen_leads = inv['eigen_leads']['data']
@@ -1354,7 +1354,7 @@ def apply_inverse_cov(cov, info, inverse_operator, nave=1, lambda2=1 / 9,
     # Reshape back to (n_src, ..., 1)
     sol.shape = stc.data.shape[:-1] + (1,)
     stc = stc.__class__(
-        sol, stc.vertices, stc.tmin, stc.tstep, stc.subject, stc.verbose)
+        sol, stc.vertices, stc.tmin, stc.tstep, stc.subject)
     if combine:  # combine the three directions
         logger.info('    Combining the current components...')
         np.sqrt(stc.data, out=stc.data)

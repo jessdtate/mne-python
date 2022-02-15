@@ -14,7 +14,7 @@
 
 .. _Simon Kornblith: http://simonster.com
 
-.. _Teon Brooks: https://teonbrooks.github.io
+.. _Teon Brooks: https://teonbrooks.com
 
 .. _Mainak Jas: https://jasmainak.github.io
 
@@ -408,7 +408,7 @@
 
 .. _Mathieu Scheltienne: https://github.com/mscheltienne
 
-.. _Timothy Gates: https://github.com/timgates42
+.. _Timothy Gates: https://au.linkedin.com/in/tim-gates-0528a4199
 
 .. _Reza Shoorangiz: https://github.com/rezashr
 

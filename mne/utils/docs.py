@@ -40,7 +40,12 @@ verbose : bool | str | int | None
     verbosity level. See the :ref:`logging documentation <tut-logging>` and
     :func:`mne.verbose` for details. Should only be passed as a keyword
     argument."""
-docdict['verbose_meth'] = (docdict['verbose'] + ' Defaults to self.verbose.')
+docdict['add_frames'] = """
+add_frames : int | None
+    If int, enable (>=1) or disable (0) the printing of stack frame
+    information using formatting. Default (None) does not change the
+    formatting. This can add overhead so is meant only for debugging.
+"""
 
 # Preload
 docdict['preload'] = """
@@ -500,11 +505,11 @@ extrapolate : str
         Extrapolate to four points placed to form a square encompassing all
         data points, where each side of the square is three times the range
         of the data in the respective dimension.
-    - ``'local'`` (default)
+    - ``'local'`` (default for MEG sensors)
         Extrapolate only to nearby points (approximately to points closer than
         median inter-electrode distance). This will also set the
         mask to be polygonal based on the convex hull of the sensors.
-    - ``'head'``
+    - ``'head'`` (default for non-MEG sensors)
         Extrapolate out to the edges of the clipping circle. This will be on
         the head circle when the sensors are contained within the head circle,
         but it can extend beyond the head when sensors are plotted outside
@@ -512,7 +517,7 @@ extrapolate : str
 
     .. versionchanged:: 0.21
 
-       - The default was changed to ``'local'``
+       - The default was changed to ``'local'`` for MEG sensors.
        - ``'local'`` was changed to use a convex hull mask
        - ``'head'`` was changed to extrapolate out to the clipping circle.
 """
@@ -743,10 +748,10 @@ phase : str
     Phase of the filter, only used if ``method='fir'``.
     Symmetric linear-phase FIR filters are constructed, and if ``phase='zero'``
     (default), the delay of this filter is compensated for, making it
-    non-causal. If ``phase=='zero-double'``,
+    non-causal. If ``phase='zero-double'``,
     then this filter is applied twice, once forward, and once backward
-    (also making it non-causal). If 'minimum', then a minimum-phase filter will
-    be constricted and applied, which is causal but has weaker stop-band
+    (also making it non-causal). If ``'minimum'``, then a minimum-phase filter
+    will be constricted and applied, which is causal but has weaker stop-band
     suppression.
 
     .. versionadded:: 0.13
@@ -1478,6 +1483,22 @@ aseg : str
     Freesurfer subject directory.
 """
 
+# Coregistration
+docdict['fiducials'] = """
+fiducials : list | dict | str
+    The fiducials given in the MRI (surface RAS) coordinate
+    system. If a dictionary is provided, it must contain the **keys**
+    ``'lpa'``, ``'rpa'``, and ``'nasion'``, with **values** being the
+    respective coordinates in meters.
+    If a list, it must be a list of ``DigPoint`` instances as returned by the
+    :func:`mne.io.read_fiducials` function.
+    If ``'estimated'``, the fiducials are derived from the ``fsaverage``
+    template. If ``'auto'`` (default), tries to find the fiducials
+    in a file with the canonical name
+    (``{subjects_dir}/{subject}/bem/{subject}-fiducials.fif``)
+    and if absent, falls back to ``'estimated'``.
+"""
+
 # Simulation
 docdict['interp'] = """
 interp : str
@@ -1554,7 +1575,7 @@ time_format : 'float' | 'clock'
     .. versionadded:: 0.24
 """
 
-# Visualization with pyqtgraph
+# Visualization with Qt
 docdict['precompute'] = """
 precompute : bool | str
     Whether to load all data (not just the visible portion) into RAM and
@@ -1562,7 +1583,7 @@ precompute : bool | str
     processor thread, instead of window-by-window during scrolling. The default
     ``'auto'`` compares available RAM space to the expected size of the
     precomputed data, and precomputes only if enough RAM is available. ``True``
-    and ``'auto'`` only work if using the PyQtGraph backend.
+    and ``'auto'`` only work if using the Qt backend.
 
     .. versionadded:: 0.24
 """
@@ -1571,7 +1592,7 @@ docdict['use_opengl'] = """
 use_opengl : bool | None
     Whether to use OpenGL when rendering the plot (requires ``pyopengl``).
     May increase performance, but effect is dependent on system CPU and
-    graphics hardware. Only works if using the PyQtGraph backend. Default is
+    graphics hardware. Only works if using the Qt backend. Default is
     None, which will use False unless the user configuration variable
     ``MNE_BROWSER_USE_OPENGL`` is set to ``'true'``,
     see :func:`mne.set_config`.
@@ -1775,6 +1796,8 @@ docdict["view"] = """
 view : str | None
     The name of the view to show (e.g. "lateral"). Other arguments
     take precedence and modify the camera starting from the ``view``.
+    See :meth:`Brain.show_view <mne.viz.Brain.show_view>` for valid
+    string shortcut options.
 """
 docdict["roll"] = """
 roll : float | None
@@ -1943,13 +1966,9 @@ brain_kwargs : dict | None
 """
 docdict['views'] = """
 views : str | list
-    View to use. Can be any of::
-
-        ['lateral', 'medial', 'rostral', 'caudal', 'dorsal', 'ventral',
-         'frontal', 'parietal', 'axial', 'sagittal', 'coronal']
-
-    Three letter abbreviations (e.g., ``'lat'``) are also supported.
-    Using multiple views (list) is not supported for mpl backend.
+    View to use. Using multiple views (list) is not supported for mpl
+    backend. See :meth:`Brain.show_view <mne.viz.Brain.show_view>` for
+    valid string options.
 """
 
 # Coregistration
@@ -2378,8 +2397,8 @@ image_format : 'png' | 'svg' | 'gif' | None
     instantiation.
 """
 docdict['report_tags'] = """
-tags : array-like of str
-    Tags to add for later interactive filtering.
+tags : array-like of str | str
+    Tags to add for later interactive filtering. Must not contain spaces.
 """
 docdict['report_replace'] = """
 replace : bool
@@ -2507,10 +2526,12 @@ docdict['epochs_on_missing'] = """
 on_missing : 'raise' | 'warn' | 'ignore'
     What to do if one or several event ids are not found in the recording.
     Valid keys are 'raise' | 'warn' | 'ignore'
-    Default is 'raise'. If on_missing is 'warn' it will proceed but
-    warn, if 'ignore' it will proceed silently. Note.
-    If none of the event ids are found in the data, an error will be
-    automatically generated irrespective of this parameter.
+    Default is ``'raise'``. If ``'warn'``, it will proceed but
+    warn; if ``'ignore'``, it will proceed silently.
+
+    .. note::
+       If none of the event ids are found in the data, an error will be
+       automatically generated irrespective of this parameter.
 """
 reject_common = """\
     Reject epochs based on **maximum** peak-to-peak signal amplitude (PTP),

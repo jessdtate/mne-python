@@ -167,6 +167,7 @@ numpydoc_xref_param_type = True
 numpydoc_xref_aliases = {
     # Python
     'file-like': ':term:`file-like <python:file object>`',
+    'iterator': ':term:`iterator <python:iterator>`',
     'path-like': ':term:`path-like`',
     'array-like': ':term:`array-like`',
     # Matplotlib
@@ -221,6 +222,7 @@ numpydoc_xref_aliases = {
     'Beamformer': 'mne.beamformer.Beamformer',
     'Transform': 'mne.transforms.Transform',
     'Coregistration': 'mne.coreg.Coregistration',
+    'Figure3D': 'mne.viz.Figure3D',
     # dipy
     'dipy.align.AffineMap': 'dipy.align.imaffine.AffineMap',
     'dipy.align.DiffeomorphicMap': 'dipy.align.imwarp.DiffeomorphicMap',
@@ -229,7 +231,7 @@ numpydoc_xref_ignore = {
     # words
     'instance', 'instances', 'of', 'default', 'shape', 'or',
     'with', 'length', 'pair', 'matplotlib', 'optional', 'kwargs', 'in',
-    'dtype', 'object', 'self.verbose',
+    'dtype', 'object',
     # shapes
     'n_vertices', 'n_faces', 'n_channels', 'm', 'n', 'n_events', 'n_colors',
     'n_times', 'obj', 'n_chan', 'n_epochs', 'n_picks', 'n_ch_groups',
@@ -253,8 +255,8 @@ numpydoc_xref_ignore = {
     # unlinkable
     'CoregistrationUI',
     'IntracranialElectrodeLocator',
-    # We need to fix these: "PyVista renderer" and "PyVista surface"
-    'PyVista', 'renderer', 'surface',
+    # TODO: fix the Renderer return type of create_3d_figure(scene=False)
+    'Renderer',
 }
 numpydoc_validate = True
 numpydoc_validation_checks = {'all'} | set(error_ignores)
@@ -496,24 +498,6 @@ nitpick_ignore = [
     ("py:class", "_FuncT"),  # type hint used in @verbose decorator
     ("py:class", "mne.utils._logging._FuncT"),
 ]
-for key in ('AcqParserFIF', 'BiHemiLabel', 'Dipole', 'DipoleFixed', 'Label',
-            'MixedSourceEstimate', 'MixedVectorSourceEstimate', 'Report',
-            'SourceEstimate', 'SourceMorph', 'VectorSourceEstimate',
-            'VolSourceEstimate', 'VolVectorSourceEstimate',
-            'channels.DigMontage', 'channels.Layout', 'coreg.Coregistration',
-            'decoding.CSP', 'decoding.EMS', 'decoding.FilterEstimator',
-            'decoding.GeneralizingEstimator', 'decoding.LinearModel',
-            'decoding.PSDEstimator', 'decoding.ReceptiveField', 'decoding.SSD',
-            'decoding.SPoC', 'decoding.Scaler', 'decoding.SlidingEstimator',
-            'decoding.TemporalFilter', 'decoding.TimeDelayingRidge',
-            'decoding.TimeFrequency', 'decoding.UnsupervisedSpatialFilter',
-            'decoding.Vectorizer',
-            'preprocessing.ICA', 'preprocessing.Xdawn',
-            'simulation.SourceSimulator',
-            'time_frequency.CrossSpectralDensity',
-            'utils.deprecated',
-            'viz.ClickableImage'):
-    nitpick_ignore.append(('py:obj', f'mne.{key}.__hash__'))
 suppress_warnings = ['image.nonlocal_uri']  # we intentionally link outside
 
 
@@ -831,6 +815,8 @@ def reset_warnings(gallery_conf, fname):
                 "default value of type 'dict' in an Any trait will",  # traits
                 'rcParams is deprecated',  # PyVista rcParams -> global_theme
                 'to mean no clipping',
+                r'the `scipy\.ndimage.*` namespace is deprecated',  # Dipy
+                '`np.MachAr` is deprecated',  # Numba
                 ):
         warnings.filterwarnings(  # deal with other modules having bad imports
             'ignore', message=".*%s.*" % key, category=DeprecationWarning)

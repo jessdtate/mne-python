@@ -38,7 +38,7 @@ from .utils import (logger, verbose, get_subjects_dir, warn, _check_fname,
 
 @verbose
 def get_head_surf(subject, source=('bem', 'head'), subjects_dir=None,
-                  on_defects='raise',  verbose=None):
+                  on_defects='raise', verbose=None):
     """Load the subject head surface.
 
     Parameters
@@ -102,6 +102,7 @@ def _get_head_surface(subject, source, subjects_dir, on_defects,
                 try:
                     surf = read_bem_surfaces(this_head, True,
                                              FIFF.FIFFV_BEM_SURF_ID_HEAD,
+                                             on_defects=on_defects,
                                              verbose=False)
                 except ValueError:
                     pass
